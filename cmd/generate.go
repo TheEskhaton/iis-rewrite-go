@@ -93,6 +93,7 @@ var generateCommand = &cobra.Command{
 		}
 		lines <- "\t</rewriteMap>\n"
 		lines <- "</rewriteMaps>\n"
+		close(lines)
 	},
 }
 
