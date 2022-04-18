@@ -6,5 +6,5 @@ Usage:
 
 ```
 go build
-.\iis-rewrite-go.exe generate -f pathToFile.csv -n NameOfRewriteMap
+.\iis-rewrite-go.exe help
 ```
