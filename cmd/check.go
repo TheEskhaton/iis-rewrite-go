@@ -9,7 +9,7 @@ import (
 )
 
 var rewriteMapFile string
-var fix bool
+var writeFixToFile string
 
 type RewriteMapMappingXml struct {
 	XMLName xml.Name `xml:"add"`
@@ -54,7 +54,7 @@ var checkCommand = &cobra.Command{
 			for _, mapping := range rewriteMap.Mappings {
 				if _, ok := rewriteKeys[mapping.Key]; ok {
 					logger.LogF("Duplicate key found: \"%v\" in map \"%v\"\n", mapping.Key, rewriteMap.Name)
-					if fix {
+					if writeFixToFile != "" {
 						outputXml.RewriteMap[i].Mappings = removeMapping(rewriteXml.RewriteMap[i].Mappings, mapping.Key)
 					}
 				} else {
@@ -64,17 +64,17 @@ var checkCommand = &cobra.Command{
 		}
 		logger.LogLn("No other duplicates found")
 
-		if fix {
+		if writeFixToFile != "" {
 			logger.LogLn("Fixing duplicates")
 			output, err := xml.MarshalIndent(outputXml, "", "  ")
 			if err != nil {
 				logger.LogF("Error marshalling line: %v\n", err)
 			}
-			err = os.Truncate(rewriteMapFile, 0)
+			err = os.Truncate(writeFixToFile, 0)
 			if err != nil {
 				logger.LogF("Error truncating file: %v\n", err)
 			}
-			err = os.WriteFile(rewriteMapFile, output, 0644)
+			err = os.WriteFile(writeFixToFile, output, 0644)
 			if err != nil {
 				logger.LogF("Error writing file: %v\n", err)
 			}
@@ -95,5 +95,5 @@ func init() {
 	rootCmd.AddCommand(checkCommand)
 
 	checkCommand.Flags().StringVarP(&rewriteMapFile, "file", "f", "", "rewrite map .config file")
-	checkCommand.Flags().BoolVarP(&fix, "fix", "x", false, "automatically fix duplicates in source file")
+	checkCommand.Flags().StringVarP(&writeFixToFile, "output", "o", "", "automatically fix duplicates and output to file")
 }
