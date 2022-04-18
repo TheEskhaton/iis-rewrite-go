@@ -39,12 +39,6 @@ var generateCommand = &cobra.Command{
 
 		logger.LogF("Generating rewrite map from %s named %v\n", generateConfig.rewriteMapFile, generateConfig.rewireMapName)
 
-		inputFile, err := os.Open(generateConfig.rewriteMapFile)
-		defer inputFile.Close()
-		if err != nil {
-			logger.LogLn(fmt.Sprintf("Error opening file: %v", err))
-		}
-
 		outputFile, err := os.Create("rewriteMap.config")
 		if err != nil {
 			logger.LogLn(fmt.Sprintf("Error opening file: %v", err))
@@ -61,6 +55,12 @@ var generateCommand = &cobra.Command{
 
 		lines <- "<rewriteMaps>\n"
 		lines <- fmt.Sprintf("\t<rewriteMap name=\"%v\">\n", generateConfig.rewireMapName)
+
+		inputFile, err := os.Open(generateConfig.rewriteMapFile)
+		defer inputFile.Close()
+		if err != nil {
+			logger.LogLn(fmt.Sprintf("Error opening file: %v", err))
+		}
 
 		scanner := bufio.NewScanner(inputFile)
 
