@@ -1,4 +1,4 @@
-module github.com/TheEskhaton/iis-rewrite-go
+module github.com/TheEskhaton/iis-toolkit
 
 go 1.18
 

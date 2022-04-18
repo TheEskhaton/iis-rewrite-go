@@ -6,5 +6,5 @@ Usage:
 
 ```
 go build
-.\iis-rewrite-go.exe help
+.\iis-toolkit.exe help
 ```

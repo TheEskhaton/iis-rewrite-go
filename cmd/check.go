@@ -4,7 +4,7 @@ import (
 	"encoding/xml"
 	"os"
 
-	"github.com/TheEskhaton/iis-rewrite-go/service"
+	"github.com/TheEskhaton/iis-toolkit/service"
 	"github.com/spf13/cobra"
 )
 

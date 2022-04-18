@@ -8,7 +8,7 @@ import (
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "iis-rewrite-go",
+	Use:   "iis-toolkit",
 	Short: "IIS Redirect map Generator from CSV file",
 	Run: func(cmd *cobra.Command, args []string) {
 		generateCommand.Run(cmd, args)

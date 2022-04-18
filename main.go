@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/TheEskhaton/iis-rewrite-go/cmd"
+	"github.com/TheEskhaton/iis-toolkit/cmd"
 )
 
 func main() {
