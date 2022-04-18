@@ -50,9 +50,8 @@ var checkCommand = &cobra.Command{
 		outputXml := rewriteXml
 		for i, rewriteMap := range rewriteXml.RewriteMap {
 			var rewriteKeys = make(map[string]string, 0)
-			var mappingsCopy = make([]RewriteMapMappingXml, len(rewriteMap.Mappings))
-			copy(mappingsCopy, rewriteMap.Mappings)
-			for _, mapping := range mappingsCopy {
+
+			for _, mapping := range rewriteMap.Mappings {
 				if _, ok := rewriteKeys[mapping.Key]; ok {
 					logger.LogF("Duplicate key found: \"%v\" in map \"%v\"\n", mapping.Key, rewriteMap.Name)
 					if fix {
