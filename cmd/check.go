@@ -9,7 +9,7 @@ import (
 )
 
 var rewriteMapFile string
-var rewriteKeys = make(map[string]string, 0)
+var fix bool
 
 type RewriteMapMappingXml struct {
 	XMLName xml.Name `xml:"add"`
@@ -47,22 +47,54 @@ var checkCommand = &cobra.Command{
 		if err != nil {
 			logger.LogF("Error unmarshalling line: %v\n", err)
 		}
-
-		for _, rewriteMap := range rewriteXml.RewriteMap {
-			for _, mapping := range rewriteMap.Mappings {
+		outputXml := rewriteXml
+		for i, rewriteMap := range rewriteXml.RewriteMap {
+			var rewriteKeys = make(map[string]string, 0)
+			var mappingsCopy = make([]RewriteMapMappingXml, len(rewriteMap.Mappings))
+			copy(mappingsCopy, rewriteMap.Mappings)
+			for _, mapping := range mappingsCopy {
 				if _, ok := rewriteKeys[mapping.Key]; ok {
 					logger.LogF("Duplicate key found: \"%v\" in map \"%v\"\n", mapping.Key, rewriteMap.Name)
+					if fix {
+						outputXml.RewriteMap[i].Mappings = removeMapping(rewriteXml.RewriteMap[i].Mappings, mapping.Key)
+					}
 				} else {
 					rewriteKeys[mapping.Key] = mapping.Value
 				}
 			}
 		}
 		logger.LogLn("No other duplicates found")
+
+		if fix {
+			logger.LogLn("Fixing duplicates")
+			output, err := xml.MarshalIndent(outputXml, "", "  ")
+			if err != nil {
+				logger.LogF("Error marshalling line: %v\n", err)
+			}
+			err = os.Truncate(rewriteMapFile, 0)
+			if err != nil {
+				logger.LogF("Error truncating file: %v\n", err)
+			}
+			err = os.WriteFile(rewriteMapFile, output, 0644)
+			if err != nil {
+				logger.LogF("Error writing file: %v\n", err)
+			}
+		}
 	},
+}
+
+func removeMapping(mappings []RewriteMapMappingXml, key string) []RewriteMapMappingXml {
+	for i, mapping := range mappings {
+		if mapping.Key == key {
+			return append(mappings[:i], mappings[i+1:]...)
+		}
+	}
+	return mappings
 }
 
 func init() {
 	rootCmd.AddCommand(checkCommand)
 
 	checkCommand.Flags().StringVarP(&rewriteMapFile, "file", "f", "", "rewrite map .config file")
+	checkCommand.Flags().BoolVarP(&fix, "fix", "x", false, "automatically fix duplicates in source file")
 }
