@@ -43,7 +43,6 @@ var generateCommand = &cobra.Command{
 		}
 
 		outputFile, err := os.Create("rewriteMap.config")
-		defer outputFile.Close()
 		if err != nil {
 			fmt.Println(fmt.Errorf("Error opening file: %v", err))
 		}
@@ -54,6 +53,7 @@ var generateCommand = &cobra.Command{
 			for line := range lines {
 				writeLine(line, outputFile)
 			}
+			outputFile.Close()
 		}()
 
 		lines <- "<rewriteMaps>\n"
