@@ -64,6 +64,7 @@ var generateCommand = &cobra.Command{
 
 		scanner := bufio.NewScanner(inputFile)
 
+	scanner:
 		for scanner.Scan() {
 
 			lineText := scanner.Text()
@@ -82,7 +83,7 @@ var generateCommand = &cobra.Command{
 			for _, mapItem := range generatedMaps {
 				if mapItem.from == rewriteMap.from {
 					logger.LogF("SKIP: duplicate rewrite map item: %v\n", rewriteMap)
-					continue
+					continue scanner
 				}
 			}
 
