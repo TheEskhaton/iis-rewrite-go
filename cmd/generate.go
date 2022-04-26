@@ -1,8 +1,9 @@
 package cmd
 
 import (
-	"bufio"
+	"encoding/csv"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 
@@ -57,25 +58,28 @@ var generateCommand = &cobra.Command{
 		lines <- fmt.Sprintf("\t<rewriteMap name=\"%v\">\n", generateConfig.rewireMapName)
 
 		inputFile, err := os.Open(generateConfig.rewriteMapFile)
-		defer inputFile.Close()
 		if err != nil {
 			logger.LogLn(fmt.Sprintf("Error opening file: %v", err))
 		}
+		defer inputFile.Close()
 
-		scanner := bufio.NewScanner(inputFile)
+		csvReader := csv.NewReader(inputFile)
+		for {
+			// Read each record from csv
+			csvLine, err := csvReader.Read()
+			if err == io.EOF {
+				break
+			}
 
-	scanner:
-		for scanner.Scan() {
-
-			lineText := scanner.Text()
-
-			splitLine := strings.Split(lineText, generateConfig.separator)
-			if len(splitLine) != 2 {
-				logger.LogF("Error parsing line: %s\n", lineText)
+			if err != nil {
+				logger.LogF("Error parsing line: %v\n", err)
+			}
+			if len(csvLine) != 2 {
+				logger.LogF("Error parsing line: %s\n", csvLine)
 				continue
 			}
 
-			rewriteMap := rewriteMap{from: strings.ReplaceAll(splitLine[0], "\"", ""), to: strings.ReplaceAll(splitLine[1], "\"", "")}
+			rewriteMap := rewriteMap{from: strings.ReplaceAll(csvLine[0], "\"", ""), to: strings.ReplaceAll(csvLine[1], "\"", "")}
 			if rewriteMap.from == "" {
 				logger.LogF("SKIP: Empty key: %v\n", rewriteMap)
 				continue
@@ -83,13 +87,11 @@ var generateCommand = &cobra.Command{
 			for _, mapItem := range generatedMaps {
 				if mapItem.from == rewriteMap.from {
 					logger.LogF("SKIP: duplicate rewrite map item: %v\n", rewriteMap)
-					continue scanner
+					continue
 				}
 			}
 
 			generatedMaps = append(generatedMaps, rewriteMap)
-
-			logger.LogLn(rewriteMap.String())
 			lines <- "\t\t" + rewriteMap.String()
 		}
 		lines <- "\t</rewriteMap>\n"
