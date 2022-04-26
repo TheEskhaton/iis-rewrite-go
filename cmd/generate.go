@@ -75,7 +75,7 @@ var generateCommand = &cobra.Command{
 				continue
 			}
 
-			rewriteMap := rewriteMap{from: splitLine[0], to: splitLine[1]}
+			rewriteMap := rewriteMap{from: strings.ReplaceAll(splitLine[0], "\"", ""), to: splitLine[1]}
 			if rewriteMap.from == "" {
 				logger.LogF("SKIP: Empty key: %v\n", rewriteMap)
 				continue
