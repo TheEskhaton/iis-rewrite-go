@@ -84,6 +84,8 @@ var generateCommand = &cobra.Command{
 			}
             fromUrl := strings.ReplaceAll(csvLine[0], "\"", "")
             toUrl := strings.ReplaceAll(csvLine[1], "\"", "")
+            fromUrl = strings.ReplaceAll(fromUrl, "&", "&amp;")
+            toUrl = strings.ReplaceAll(toUrl, "&", "&amp;")
             if generateConfig.stripDomains {
                 parsedFromUrl,errFrom := url.Parse(fromUrl)
                 parsedToUrl,errTo := url.Parse(toUrl)
