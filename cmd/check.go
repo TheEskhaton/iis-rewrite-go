@@ -11,23 +11,6 @@ import (
 var rewriteMapFile string
 var writeFixToFile string
 
-type RewriteMapMappingXml struct {
-	XMLName xml.Name `xml:"add"`
-	Key     string   `xml:"key,attr"`
-	Value   string   `xml:"value,attr"`
-}
-
-type RewriteMapMapsXml struct {
-	XMLName  xml.Name               `xml:"rewriteMap"`
-	Name     string                 `xml:"name,attr"`
-	Mappings []RewriteMapMappingXml `xml:"add"`
-}
-
-type RewriteMapRootXml struct {
-	XMLName    xml.Name            `xml:"rewriteMaps"`
-	RewriteMap []RewriteMapMapsXml `xml:"rewriteMap"`
-}
-
 var checkCommand = &cobra.Command{
 	Use:   "check",
 	Short: "check a rewrite map for duplicates",
@@ -35,17 +18,10 @@ var checkCommand = &cobra.Command{
 		logger := service.NewLogger(false)
 		logger.LogF("Checking rewrite map config %s for duplicates\n", rewriteMapFile)
 
-		contents, err := os.ReadFile(rewriteMapFile)
-
+		rewriteXml, err := service.NewRewriteMapRootXmlFromFile(rewriteMapFile, logger)
 		if err != nil {
-			logger.LogF("Error reading file: %v\n", err)
-		}
-
-		rewriteXml := RewriteMapRootXml{}
-
-		err = xml.Unmarshal([]byte(contents), &rewriteXml)
-		if err != nil {
-			logger.LogF("Error unmarshalling line: %v\n", err)
+			logger.LogF("Error creating rewrite map from file : %v", err)
+			return
 		}
 		outputXml := rewriteXml
 		for i, rewriteMap := range rewriteXml.RewriteMap {
@@ -82,7 +58,7 @@ var checkCommand = &cobra.Command{
 	},
 }
 
-func removeMapping(mappings []RewriteMapMappingXml, key string) []RewriteMapMappingXml {
+func removeMapping(mappings []service.RewriteMapMappingXml, key string) []service.RewriteMapMappingXml {
 	for i, mapping := range mappings {
 		if mapping.Key == key {
 			return append(mappings[:i], mappings[i+1:]...)

@@ -6,7 +6,7 @@ import (
 	"io"
 	"os"
 	"strings"
-
+    "net/url"
 	"github.com/TheEskhaton/iis-toolkit/service"
 	"github.com/spf13/cobra"
 )
@@ -28,6 +28,8 @@ type generateSettings struct {
 	rewireMapName  string
 	separator      string
 	silent         bool
+    stripDomains   bool
+    domainToRemove string
 }
 
 var generateConfig generateSettings
@@ -39,7 +41,9 @@ var generateCommand = &cobra.Command{
 		logger := service.NewLogger(generateConfig.silent)
 
 		logger.LogF("Generating rewrite map from %s named %v\n", generateConfig.rewriteMapFile, generateConfig.rewireMapName)
-
+        if generateConfig.stripDomains {
+            logger.LogF("Domain names will be removed during generation")
+        }
 		outputFile, err := os.Create("rewriteMap.config")
 		if err != nil {
 			logger.LogLn(fmt.Sprintf("Error opening file: %v", err))
@@ -78,8 +82,29 @@ var generateCommand = &cobra.Command{
 				logger.LogF("Error parsing line: %s\n", csvLine)
 				continue
 			}
-
-			rewriteMap := rewriteMap{from: strings.ReplaceAll(csvLine[0], "\"", ""), to: strings.ReplaceAll(csvLine[1], "\"", "")}
+            fromUrl := strings.ReplaceAll(csvLine[0], "\"", "")
+            toUrl := strings.ReplaceAll(csvLine[1], "\"", "")
+            if generateConfig.stripDomains {
+                parsedFromUrl,errFrom := url.Parse(fromUrl)
+                parsedToUrl,errTo := url.Parse(toUrl)
+                if errFrom != nil {
+                    logger.LogF("Error parsing URL: %s\n", fromUrl)
+                }
+                if errTo != nil {
+                    logger.LogF("Error parsing URL: %s\n", toUrl)
+                }
+                fromUrl = strings.ReplaceAll(fromUrl, parsedFromUrl.Host, "")
+                toUrl = strings.ReplaceAll(toUrl, parsedToUrl.Host, "")
+                fromUrl = strings.ReplaceAll(fromUrl, parsedFromUrl.Scheme, "")
+                toUrl = strings.ReplaceAll(toUrl, parsedToUrl.Scheme, "")
+                fromUrl = strings.ReplaceAll(fromUrl, "://", "")
+                toUrl = strings.ReplaceAll(toUrl, "://", "")
+                if generateConfig.domainToRemove != "" {
+                    fromUrl = strings.ReplaceAll(fromUrl, generateConfig.domainToRemove, "")
+                    toUrl = strings.ReplaceAll(toUrl, generateConfig.domainToRemove, "")
+                }
+            }
+			rewriteMap := rewriteMap{from: fromUrl, to: toUrl}
 			if rewriteMap.from == "" {
 				logger.LogF("SKIP: Empty key: %v\n", rewriteMap)
 				continue
@@ -107,6 +132,8 @@ func init() {
 	generateCommand.Flags().StringVarP(&generateConfig.rewireMapName, "name", "n", "", "rewrite map name")
 	generateCommand.Flags().StringVarP(&generateConfig.separator, "separator", "s", ",", "csv separator")
 	generateCommand.Flags().BoolVarP(&generateConfig.silent, "silent", "q", false, "silent mode")
+	generateCommand.Flags().BoolVarP(&generateConfig.stripDomains, "stripDomains", "d", false, "strip domain names")
+	generateCommand.Flags().StringVarP(&generateConfig.domainToRemove, "domainToRemove", "r", "", "domain to remove")
 }
 
 func writeLine(line string, outputFile *os.File) {
