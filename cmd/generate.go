@@ -12,8 +12,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var rewriteRowTemplate string = "<add key=\"%v\" value=\"%v\" />\n"
-var generatedMaps []rewriteMap = make([]rewriteMap, 0)
+const rewriteRowTemplate string = "<add key=\"%v\" value=\"%v\" />\n"
+
+var generatedMaps []rewriteMap
 
 type rewriteMap struct {
 	from string
@@ -46,21 +47,15 @@ var generateCommand = &cobra.Command{
 			logger.LogF("Domain names will be removed during generation")
 		}
 		outputFile, err := os.Create("rewriteMap.config")
+		defer outputFile.Close()
 		if err != nil {
 			logger.LogLn(fmt.Sprintf("Error opening file: %v", err))
 		}
 
-		lines := make(chan string)
+		var lines []string
 
-		go func() {
-			for line := range lines {
-				writeLine(line, outputFile)
-			}
-			outputFile.Close()
-		}()
-
-		lines <- "<rewriteMaps>\n"
-		lines <- fmt.Sprintf("\t<rewriteMap name=\"%v\">\n", generateConfig.rewireMapName)
+		lines = append(lines, "<rewriteMaps>\n")
+		lines = append(lines, fmt.Sprintf("\t<rewriteMap name=\"%v\">\n", generateConfig.rewireMapName))
 
 		inputFile, err := os.Open(generateConfig.rewriteMapFile)
 		if err != nil {
@@ -120,11 +115,14 @@ var generateCommand = &cobra.Command{
 			}
 
 			generatedMaps = append(generatedMaps, rewriteMap)
-			lines <- "\t\t" + rewriteMap.String()
+			lines = append(lines, "\t\t"+rewriteMap.String())
 		}
-		lines <- "\t</rewriteMap>\n"
-		lines <- "</rewriteMaps>\n"
-		close(lines)
+		lines = append(lines, "\t</rewriteMap>\n")
+		lines = append(lines, "</rewriteMaps>\n")
+
+		for _, line := range lines {
+			writeLine(line, outputFile)
+		}
 	},
 }
 
