@@ -8,8 +8,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var rewriteMapFile string
-var writeFixToFile string
+var (
+	rewriteMapFile string
+	writeFixToFile string
+)
 
 var checkCommand = &cobra.Command{
 	Use:   "check",
@@ -25,7 +27,7 @@ var checkCommand = &cobra.Command{
 		}
 		outputXml := rewriteXml
 		for i, rewriteMap := range rewriteXml.RewriteMap {
-			var rewriteKeys = make(map[string]string, 0)
+			rewriteKeys := make(map[string]string, 0)
 
 			for _, mapping := range rewriteMap.Mappings {
 				if _, ok := rewriteKeys[mapping.Key]; ok {
@@ -44,15 +46,15 @@ var checkCommand = &cobra.Command{
 			logger.LogLn("Fixing duplicates")
 			output, err := xml.MarshalIndent(outputXml, "", "  ")
 			if err != nil {
-				logger.LogF("Error marshalling line: %v\n", err)
+				logger.LogF("error marshalling line: %v\n", err)
 			}
 			err = os.Truncate(writeFixToFile, 0)
 			if err != nil {
-				logger.LogF("Error truncating file: %v\n", err)
+				logger.LogF("error truncating file: %v\n", err)
 			}
 			err = os.WriteFile(writeFixToFile, output, 0644)
 			if err != nil {
-				logger.LogF("Error writing file: %v\n", err)
+				logger.LogF("error writing file: %v\n", err)
 			}
 		}
 	},

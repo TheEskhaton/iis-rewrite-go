@@ -47,10 +47,11 @@ var generateCommand = &cobra.Command{
 			logger.LogF("Domain names will be removed during generation")
 		}
 		outputFile, err := os.Create("rewriteMap.config")
-		defer outputFile.Close()
 		if err != nil {
 			logger.LogLn(fmt.Sprintf("Error opening file: %v", err))
 		}
+
+		defer outputFile.Close()
 
 		var lines []string
 
@@ -140,6 +141,6 @@ func init() {
 func writeLine(line string, outputFile *os.File) {
 	_, err := outputFile.WriteString(line)
 	if err != nil {
-		fmt.Println(fmt.Errorf("Error writing to file: %v", err))
+		fmt.Println(fmt.Errorf("error writing to file: %v", err))
 	}
 }
